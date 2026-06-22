@@ -1,0 +1,10 @@
+[package]
+name = "clf-ddns"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ureq = { version = "2.10.1", features = ["json"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_yaml = "0.9"
+serde_json = "1.0"
