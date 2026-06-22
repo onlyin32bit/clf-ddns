@@ -1,4 +1,4 @@
-name: Release
+name: Build and Publish Static Release
 
 on:
   push:
@@ -10,27 +10,27 @@ permissions:
 
 jobs:
   publish:
-    name: Publish Release
+    name: Build Static Binary and Release
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout sources
+      - name: Checkout repository source code
         uses: actions/checkout@v4
 
-      - name: Install musl-tools
+      - name: Install musl toolchain tools for static compiling
         run: sudo apt-get update && sudo apt-get install -y musl-tools
 
-      - name: Install rust toolchain
+      - name: Configure Rust stable toolchain with musl target
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-unknown-linux-musl
 
-      - name: Build release binary
+      - name: Build release binary using static musl-libc target
         run: cargo build --release --target x86_64-unknown-linux-musl
 
-      - name: Prepare assets
+      - name: Copy compiled release binary to root directory
         run: cp target/x86_64-unknown-linux-musl/release/clf-ddns ./clf-ddns
 
-      - name: Upload binaries to release
+      - name: Create GitHub Release and upload static binary
         uses: softprops/action-gh-release@v2
         with:
           files: ./clf-ddns

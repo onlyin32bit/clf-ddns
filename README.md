@@ -7,7 +7,7 @@ A lightweight DDNS updater that checks the current public IP via Cloudflare's tr
 Install using the one-liner script (requires root privileges):
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/onlyin32bit/clf-ddns/main/install.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/onlyin32bit/clf-ddns/main/install.sh | sudo sh
 ```
 
 The script will download the latest pre-compiled static binary, install the systemd timer (running every 5 minutes), and prompt you to set up your configuration.
@@ -39,16 +39,3 @@ domain_name: "ddns.example.com"
   ```
 - **Apply configuration changes**:
   Changes to `/etc/clf-ddns/config.yaml` are picked up automatically on the next scheduled run. No systemd reload is required.
-
-## Releasing and Version Control
-
-To publish a new version:
-1. Create a tag matching `v*` (e.g. `v0.1.0`):
-   ```bash
-   git tag v0.1.0
-   ```
-2. Push the tag to GitHub:
-   ```bash
-   git push origin v0.1.0
-   ```
-This automatically triggers the GitHub Actions workflow to build the static Linux binary and publish it as a release asset.

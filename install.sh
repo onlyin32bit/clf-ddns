@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
-if [ "$EUID" -ne 0 ]; then
+if [ "$(id -u)" -ne 0 ]; then
   echo "Please run as root (e.g., sudo ./install.sh)"
   exit 1
 fi
@@ -74,7 +74,8 @@ echo ""
 
 # Interactive prompt to configure immediately, redirecting stdin/stdout to /dev/tty to support curl piping.
 if [ -t 0 ] || [ -c /dev/tty ]; then
-  read -p "Would you like to edit the configuration file now? [y/N]: " choice </dev/tty
+  printf "Would you like to edit the configuration file now? [y/N]: " >/dev/tty
+  read choice </dev/tty
   case "$choice" in
     [yY][eE][sS]|[yY])
       # Find available editor
