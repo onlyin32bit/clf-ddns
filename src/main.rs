@@ -3,7 +3,7 @@ use std::fs;
 use std::path::Path;
 
 const CACHE_FILE: &str = "/tmp/current_ip.txt";
-const CONFIG_FILE: &str = "/etc/cloudflare-ddns/config.yaml";
+const CONFIG_FILE: &str = "/etc/clf-ddns/config.yaml";
 
 #[derive(Deserialize)]
 struct Config {
