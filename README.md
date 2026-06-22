@@ -1,16 +1,14 @@
 # clf-ddns
 
-A lightweight DDNS updater that checks the current public IP via Cloudflare's trace service and updates an A record on Cloudflare if the IP has changed. It is built as a static binary with zero external dependencies.
+A lightweight DDNS updater that checks the current public IP via Cloudflare's trace service and updates an A record on Cloudflare if the IP has changed.
 
 ## Installation
 
-Install using the one-liner script (requires root privileges):
+Install using the script (requires root privileges):
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/onlyin32bit/clf-ddns/main/install.sh | sudo sh
 ```
-
-The script will download the latest pre-compiled static binary, install the systemd timer (running every 5 minutes), and prompt you to set up your configuration.
 
 ## Configuration
 
@@ -29,7 +27,10 @@ domain_name: "ddns.example.com"
   ```bash
   sudo clf-ddns
   ```
-  or run it via systemd:
+
+### systemd:
+
+- **Trigger update immediately**:
   ```bash
   sudo systemctl start clf-ddns.service
   ```
@@ -37,5 +38,26 @@ domain_name: "ddns.example.com"
   ```bash
   sudo journalctl -u clf-ddns.service
   ```
-- **Apply configuration changes**:
-  Changes to `/etc/clf-ddns/config.yaml` are picked up automatically on the next scheduled run. No systemd reload is required.
+
+### OpenRC:
+
+- **Trigger update / Restart daemon**:
+  ```bash
+  sudo rc-service clf-ddns restart
+  ```
+- **Check service status**:
+  ```bash
+  sudo rc-service clf-ddns status
+  ```
+- **Stop daemon**:
+  ```bash
+  sudo rc-service clf-ddns stop
+  ```
+
+### Under other (via Cron):
+
+- **Set up scheduler**:
+  Open your crontab configuration (`sudo crontab -e`) and add:
+  ```cron
+  */5 * * * * /usr/local/bin/clf-ddns
+  ```
