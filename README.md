@@ -12,13 +12,26 @@ curl -sSL https://raw.githubusercontent.com/onlyin32bit/clf-ddns/main/install.sh
 
 ## Configuration
 
-Edit `/etc/clf-ddns/config.yaml`:
+Edit `/etc/clf-ddns/config.yaml`. You can specify a single domain or a list of multiple domains:
 
+### Single Domain
 ```yaml
 cloudflare_api_token: "YOUR_CLOUDFLARE_API_TOKEN"
 zone_id: "YOUR_ZONE_ID"
 record_id: "YOUR_RECORD_ID"
 domain_name: "ddns.example.com"
+```
+
+### Multiple Domains
+```yaml
+cloudflare_api_token: "YOUR_CLOUDFLARE_API_TOKEN"
+domains:
+  - zone_id: "ZONE_ID_1"
+    record_id: "RECORD_ID_1"
+    domain_name: "ddns1.example.com"
+  - zone_id: "ZONE_ID_2"
+    record_id: "RECORD_ID_2"
+    domain_name: "ddns2.example.com"
 ```
 
 ## Running & Reloading

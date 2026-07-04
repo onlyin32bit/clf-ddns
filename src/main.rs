@@ -6,11 +6,19 @@ const CACHE_FILE: &str = "/tmp/current_ip.txt";
 const CONFIG_FILE: &str = "/etc/clf-ddns/config.yaml";
 
 #[derive(Deserialize)]
-struct Config {
-    cloudflare_api_token: String,
+struct DomainConfig {
     zone_id: String,
     record_id: String,
     domain_name: String,
+}
+
+#[derive(Deserialize)]
+struct Config {
+    cloudflare_api_token: String,
+    zone_id: Option<String>,
+    record_id: Option<String>,
+    domain_name: Option<String>,
+    domains: Option<Vec<DomainConfig>>,
 }
 
 #[derive(Serialize)]
@@ -49,37 +57,79 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config_str = fs::read_to_string(config_path)?;
     let config: Config = serde_yaml::from_str(&config_str)?;
 
-    let url = format!(
-        "https://api.cloudflare.com/client/v4/zones/{}/dns_records/{}",
-        config.zone_id, config.record_id
-    );
+    let mut domains = Vec::new();
+    if let (Some(zone_id), Some(record_id), Some(domain_name)) = (
+        config.zone_id,
+        config.record_id,
+        config.domain_name,
+    ) {
+        domains.push(DomainConfig {
+            zone_id,
+            record_id,
+            domain_name,
+        });
+    }
 
-    let payload = CloudflarePayload {
-        r#type: "A".to_string(),
-        name: config.domain_name,
-        content: current_ip.clone(),
-        ttl: 1,
-        proxied: true,
-    };
+    if let Some(mut extra_domains) = config.domains {
+        domains.append(&mut extra_domains);
+    }
 
-    let res = match ureq::put(&url)
-        .set("Authorization", &format!("Bearer {}", config.cloudflare_api_token))
-        .timeout(std::time::Duration::from_secs(5))
-        .send_json(&payload)
-    {
-        Ok(response) => response,
-        Err(ureq::Error::Status(code, response)) => {
-            eprintln!("Cloudflare API returned error status: {} - {}", code, response.into_string().unwrap_or_default());
-            std::process::exit(1);
+    if domains.is_empty() {
+        eprintln!("No domains configured for update.");
+        std::process::exit(1);
+    }
+
+    let mut all_success = true;
+    for domain in &domains {
+        let url = format!(
+            "https://api.cloudflare.com/client/v4/zones/{}/dns_records/{}",
+            domain.zone_id, domain.record_id
+        );
+
+        let payload = CloudflarePayload {
+            r#type: "A".to_string(),
+            name: domain.domain_name.clone(),
+            content: current_ip.clone(),
+            ttl: 1,
+            proxied: true,
+        };
+
+        match ureq::put(&url)
+            .set("Authorization", &format!("Bearer {}", config.cloudflare_api_token))
+            .timeout(std::time::Duration::from_secs(5))
+            .send_json(&payload)
+        {
+            Ok(res) => {
+                if res.status() == 200 {
+                    println!("Cloudflare DNS successfully updated for {} to: {}", domain.domain_name, current_ip);
+                } else {
+                    eprintln!(
+                        "Cloudflare API returned unexpected status for {}: {}",
+                        domain.domain_name,
+                        res.status()
+                    );
+                    all_success = false;
+                }
+            }
+            Err(ureq::Error::Status(code, response)) => {
+                eprintln!(
+                    "Cloudflare API returned error status for {}: {} - {}",
+                    domain.domain_name,
+                    code,
+                    response.into_string().unwrap_or_default()
+                );
+                all_success = false;
+            }
+            Err(e) => {
+                eprintln!("Error updating domain {}: {}", domain.domain_name, e);
+                all_success = false;
+            }
         }
-        Err(e) => return Err(Box::new(e)),
-    };
+    }
 
-    if res.status() == 200 {
+    if all_success {
         fs::write(CACHE_FILE, &current_ip)?;
-        println!("Cloudflare DNS successfully updated to: {}", current_ip);
     } else {
-        eprintln!("Cloudflare API returned unexpected status: {}", res.status());
         std::process::exit(1);
     }
 
